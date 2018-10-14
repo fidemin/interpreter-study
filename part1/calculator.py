@@ -15,7 +15,7 @@ class Token(object):
     def __repr__(self):
         return self.__str__()
 
-# only parse
+
 class Lexer(object):
     def __init__(self, text):
         self._text = text
@@ -23,7 +23,7 @@ class Lexer(object):
         self._current_token = None
 
     def error(self):
-        raise Exception('Error input parsing')
+        raise Exception('input parsing error')
 
     def _next_token(self):
         text = self._text
@@ -65,25 +65,30 @@ class Interpreter(object):
         self._lexer = Lexer(text)
 
     def eat(self, token_type):
-        try:
-            if self._lexer.scan():
-                if self._lexer.token().type == token_type:
-                    return self._lexer.token()
-                else:
-                    raise Exception('Error input parsing')
-        except Exception as e:
-            raise e
+        if self._lexer.token().type != token_type:
+            raise Exception("token type not matching as expected")
+
+        self._lexer.scan()
+
+    def current_token(self):
+        return self._lexer.token()
 
     def interpret(self):
         """interpret => INTEGER PLUS INTEGER"""
-        #self._current_token = self.get_next_token()
+        self._lexer.scan()
 
         try:
-            left = self.eat(INTEGER)
+            left = self.current_token()
+            self.eat(INTEGER)
 
-            op = self.eat(PLUS)
+            op = self.current_token()
+            self.eat(PLUS)
 
-            right = self.eat(INTEGER)
+            right = self.current_token()
+            self.eat(INTEGER)
+
+            self.eat(EOF)
+
         except Exception as e:
             raise e
 
@@ -112,4 +117,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-# problem: '3+3j' also works
