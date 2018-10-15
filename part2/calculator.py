@@ -15,7 +15,7 @@ class Token(object):
     def __repr__(self):
         return self.__str__()
 
-# only parse
+
 class Lexer(object):
     def __init__(self, text):
         self._text = text
@@ -25,7 +25,6 @@ class Lexer(object):
             self._current_char = self._text[self._pos]
         else:
             self._current_char = None
-        self._queue = list()
  
     def _next(self):
         self._pos += 1
@@ -46,10 +45,9 @@ class Lexer(object):
         return int(result)
 
     def _is_operator(self, char):
-        if char in ['+', '-']:
+        if self._current_char in ['+', '-']:
             return True
         return False
-
 
     def _next_token(self):
         if self._current_char is None:
@@ -89,27 +87,29 @@ class Interpreter(object):
         self._lexer = Lexer(text)
 
     def eat(self, token_type):
-        try:
-            self._lexer.scan()
-            if self._lexer.token().type == token_type:
-                return self._lexer.token()
-            else:
-                raise Exception('Error input parsing')
-        except Exception as e:
-            raise e
+        if self._lexer.token().type != token_type:
+            raise Exception("token type not matching as expected")
+
+        self._lexer.scan()
+
+    def current_token(self):
+        return self._lexer.token()
 
     def interpret(self):
         """interpret => INTEGER PLUS INTEGER"""
-        #self._current_token = self.get_next_token()
+        self._lexer.scan()
 
         try:
-            left = self.eat(INTEGER)
+            left = self.current_token()
+            self.eat(INTEGER)
 
-            op = self.eat(OP)
+            op = self.current_token()
+            self.eat(OP)
 
-            right = self.eat(INTEGER)
+            right = self.current_token()
+            self.eat(INTEGER)
 
-            eof = self.eat(EOF)
+            self.eat(EOF)
 
         except Exception as e:
             raise e
@@ -121,8 +121,8 @@ class Interpreter(object):
         if op.value == "-":
             return left.value - right.value
 
-
         raise Exception("wrong syntax")
+
 
 def main():
     while True:

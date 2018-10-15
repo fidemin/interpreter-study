@@ -15,7 +15,7 @@ class Token(object):
     def __repr__(self):
         return self.__str__()
 
-# only parse
+
 class Lexer(object):
     def __init__(self, text):
         self._text = text
@@ -25,7 +25,6 @@ class Lexer(object):
             self._current_char = self._text[self._pos]
         else:
             self._current_char = None
-        self._queue = list()
  
     def _next(self):
         self._pos += 1
@@ -46,10 +45,9 @@ class Lexer(object):
         return int(result)
 
     def _is_operator(self, char):
-        if char in ['+', '-', '*', '/']:
+        if self._current_char in ['+', '-']:
             return True
         return False
-
 
     def _next_token(self):
         if self._current_char is None:
@@ -87,48 +85,46 @@ class Lexer(object):
 class Interpreter(object):
     def __init__(self, text):
         self._lexer = Lexer(text)
-        self._require_type = INTEGER
-        self._queue = list()
 
-    def check(self, token_type):
+    def eat(self, token_type):
         if self._lexer.token().type != token_type:
-            return False
+            raise Exception("token type not matching as expected")
 
-        return True
+        self._lexer.scan()
 
+    @property
     def current_token(self):
         return self._lexer.token()
 
     def interpret(self):
         """interpret => INTEGER PLUS INTEGER"""
-        #self._current_token = self.get_next_token()
-        tokens = list()
-        result = 0
+        self._lexer.scan()
 
-        if self._lexer.scan() and self.check(INTEGER):
-            result = self.current_token().value
-        else:
-            raise Exception("firt value should be integer")
+        try:
+            result = self.current_token.value
+            self.eat(INTEGER)
 
-        while self._lexer.scan() and self.current_token().type in [OP]:
-            token = self.current_token()
-            if self._lexer.scan() and self.check(INTEGER):
-                if token.value == "+":
-                    result += self.current_token().value
-                elif token.value == "-":
-                    result -= self.current_token().value
-            else:
-                raise Exception("opration is last value")
+            while self.current_token.type == OP:
+                op = self.current_token.value
+                self.eat(OP)
+                integer = self.current_token.value
+                self.eat(INTEGER)
+                if op == '+':
+                    result += integer
+                elif op == '-':
+                    result -= integer
 
-        return result
+            return result
+        except Exception as e:
+            raise e
+
+        raise Exception("wrong syntax")
 
 
 def main():
     while True:
         try:
             text = raw_input('calc> ')
-            if text == '':
-                continue
             if text == 'exit':
                 print 'interpreter terminated'
                 break
@@ -142,7 +138,8 @@ def main():
             result = interpreter.interpret()
             print(result)
         except Exception as e:
-            print e
+            print "[error]", e
+            print "[info] print 'exit' to exit program"
 
 if __name__ == '__main__':
     main()
