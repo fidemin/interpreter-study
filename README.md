@@ -1,5 +1,4 @@
 # interpreter-study
-interpreter study sample
 
-study using
+## study sample
 https://ruslanspivak.com/lsbasi-part1/
