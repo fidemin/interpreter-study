@@ -1,5 +1,5 @@
 
-INTEGER, OP, EOF, BRACKET_OPEN, BRACKET_CLOSE = 'INTEGER', 'OP', 'EOF', 'BRACKET_OPEN', 'BRACKET_CLOSE'
+INTEGER, OP, EOF, LPAREN, RPAREN = 'INTEGER', 'OP', 'EOF', 'LPAREN', 'RPAREN'
 
 class Token(object):
     def __init__(self, type_, value):
@@ -78,12 +78,12 @@ class Lexer(object):
 
         # parse parenthese open
         if self._is_bracket_open():
-            token = Token(BRACKET_OPEN, self._current_char)
+            token = Token(LPAREN, self._current_char)
             self._next()
             return token
 
         if self._is_bracket_close():
-            token = Token(BRACKET_CLOSE, self._current_char)
+            token = Token(RPAREN, self._current_char)
             self._next()
             return token
 
@@ -113,7 +113,7 @@ class Interpreter(object):
         return self._lexer.token()
 
     def eat(self, token_type):
-        
+
         if self._lexer.token().type != token_type:
             raise Exception("token type not matching as expected")
 
@@ -121,17 +121,19 @@ class Interpreter(object):
 
     def factor(self):
         """
-        factor: BRACKET_OPEN expr BRACKET_CLOSE | INTEGER
+        factor: LPAREN expr RPAREN | INTEGER
         """
-        if self.current_token.type == BRACKET_OPEN:
-            self.eat(BRACKET_OPEN)
+        if self.current_token.type == LPAREN:
+            self.eat(LPAREN)
             value = self.expr()
-            self.eat(BRACKET_CLOSE)
+            self.eat(RPAREN)
             return value
-        else:
+        elif self.current_token.type == INTEGER:
             value = self.current_token.value
             self.eat(INTEGER)
             return value
+
+        raise Exception("wrong factor syntax")
 
     def term(self):
         """
@@ -148,6 +150,9 @@ class Interpreter(object):
         return value
 
     def expr(self):
+        """
+        expr    : term ((PLUS | MINUS ) term)*
+        """
         result = self.term()
 
         while self.current_token.value in ['+', '-']:
@@ -162,11 +167,12 @@ class Interpreter(object):
 
 
     def interpret(self):
-        """Aruthmetic expression parser / interpreter
+        """
+        Aruthmetic expression interpreter
 
         expr    : term ((PLUS | MINUS ) term)*
         term    : factor ((MUL | DIV ) factor)*
-        factor: BRACKET_OPEN expr BRACKET_CLOSE | INTEGER
+        factor: LPAREN expr RPAREN | INTEGER
 
         """
         try:
